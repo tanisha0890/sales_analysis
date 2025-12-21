@@ -1,90 +1,89 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import calendar
+import os
 
-# ---------------- LOAD DATA ----------------
-data = pd.read_csv("sales_data.csv")
+def analyze_sales():
+    # ---------------- LOAD DATA ----------------
+    # Ensure sales_data.csv exists in the same folder
+    data = pd.read_csv("sales_data.csv")
+    data.columns = data.columns.str.strip()
 
-# Clean up column names (remove spaces)
-data.columns = data.columns.str.strip()
-print("Columns found:", data.columns.tolist())
+    # Date processing
+    data["Sale_Date"] = pd.to_datetime(data["Sale_Date"])
+    data["Month"] = data["Sale_Date"].dt.month_name()
+    data["Month_No"] = data["Sale_Date"].dt.month
 
-data["Sale_Date"] = pd.to_datetime(data["Sale_Date"])
-data["Month"] = data["Sale_Date"].dt.month_name()
-data["Month_No"] = data["Sale_Date"].dt.month
+    # ---------------- NUMERIC INSIGHTS ----------------
+    total_sales = data["Sales_Amount"].sum()
+    total_quantity = data["Quantity_Sold"].sum()
 
-# ---------------- BASIC METRICS ----------------
-total_sales = data["Sales_Amount"].sum()
-print("Total Sales:", total_sales)
+    region_sales = (
+        data.groupby("Region")["Sales_Amount"]
+        .sum()
+        .sort_values(ascending=False)
+    )
 
-total_quantity = data["Quantity_Sold"].sum()
-print("Total Quantity Sold:", total_quantity)
+    best_region = region_sales.idxmax()
 
-# ---------------- PRODUCT-WISE SALES ----------------
-product_sales = (
-    data.groupby("Product_Category")["Sales_Amount"]
-    .sum()
-    .sort_values(ascending=False)
-)
+    product_sales = (
+        data.groupby("Product_Category")["Sales_Amount"]
+        .sum()
+        .sort_values(ascending=False)
+    )
 
-print("\nTop 3 Products:\n", product_sales.head(3))
-print("\nWorst 3 Products:\n", product_sales.tail(3))
+    top_3_products = product_sales.head(3)
+    worst_3_products = product_sales.tail(3)
 
-# ---------------- REGION-WISE SALES ----------------
-region_sales = (
-    data.groupby("Region")["Sales_Amount"]
-    .sum()
-    .sort_values(ascending=False)
-)
-print("\nRegion-wise Sales:\n", region_sales)
+    # ---------------- MONTH-WISE SALES ----------------
+    monthly_sales = (
+        data.groupby(["Month_No", "Month"])["Sales_Amount"]
+        .sum()
+        .reset_index()
+        .sort_values("Month_No")
+    )
 
-# ---------------- MONTH-WISE SALES ----------------
-monthly_sales = (
-    data.groupby(["Month_No", "Month"])["Sales_Amount"]
-    .sum()
-    .reset_index()
-    .sort_values("Month_No")
-)
+    # ---------------- GRAPH STYLING (STOCK STYLE) ----------------
+    os.makedirs("static/graphs", exist_ok=True)
+    plt.style.use('dark_background')
+    
+    # Common chart properties
+    accent_green = "#00ff41"
+    grid_color = "#2f3336"
 
-print("\nMonth-wise Sales:\n", monthly_sales)
+    # Graph 1: Trend Line
+    plt.figure(figsize=(10, 5), facecolor='#16181c')
+    ax = plt.gca()
+    ax.set_facecolor('#16181c')
+    
+    plt.plot(monthly_sales["Month"], monthly_sales["Sales_Amount"], 
+             marker="o", color=accent_green, linewidth=2, markersize=6)
+    
+    plt.title("MONTH-WISE PERFORMANCE", color='white', fontsize=12, loc='left', pad=20)
+    plt.grid(color=grid_color, linestyle='--', linewidth=0.5)
+    plt.xticks(rotation=0, color='#71767b')
+    plt.yticks(color='#71767b')
+    plt.tight_layout()
+    plt.savefig("static/graphs/monthly_sales.png", facecolor='#16181c')
+    plt.close()
 
-# ---------------- GRAPHS ----------------
+    # Graph 2: Region Bar Chart
+    plt.figure(figsize=(10, 5), facecolor='#16181c')
+    ax2 = plt.gca()
+    ax2.set_facecolor('#16181c')
+    
+    region_sales.plot(kind="bar", color='#1d9bf0', edgecolor=grid_color)
+    
+    plt.title("REGION DISTRIBUTION", color='white', fontsize=12, loc='left', pad=20)
+    plt.xticks(rotation=0, color='#71767b')
+    plt.yticks(color='#71767b')
+    plt.tight_layout()
+    plt.savefig("static/graphs/region_sales.png", facecolor='#16181c')
+    plt.close()
 
-#  Top 3 Products
-plt.figure(figsize=(8, 4))
-product_sales.head(3).plot(kind="bar", color="skyblue")
-plt.title("Top 3 Product Categories by Sales")
-plt.ylabel("Sales Amount")
-plt.xlabel("Product Category")
-plt.tight_layout()
-plt.show()
-
-#  Worst 3 Products
-plt.figure(figsize=(8, 4))
-product_sales.tail(3).plot(kind="bar", color="salmon")
-plt.title("Worst 3 Product Categories by Sales")
-plt.ylabel("Sales Amount")
-plt.xlabel("Product Category")
-plt.tight_layout()
-plt.show()
-
-# Region-wise Sales
-plt.figure(figsize=(6, 4))
-region_sales.plot(kind="bar", color="orange")
-plt.title("Region-wise Sales")
-plt.ylabel("Sales Amount")
-plt.xlabel("Region")
-plt.tight_layout()
-plt.show()
-
-# Month-wise Trend
-plt.figure(figsize=(8, 4))
-plt.plot(monthly_sales["Month"], monthly_sales["Sales_Amount"], marker="o", color="green")
-plt.title("Month-wise Sales Trend")
-plt.xlabel("Month")
-plt.ylabel("Sales Amount")
-plt.xticks(rotation=45)
-plt.grid(True, linestyle="--", alpha=0.6)
-plt.tight_layout()
-plt.show()
-
+    return {
+        "total_sales": f"${total_sales:,.2f}",
+        "total_quantity": f"{total_quantity:,}",
+        "best_region": best_region,
+        "top_3_products": top_3_products,
+        "worst_3_products": worst_3_products
+    }
