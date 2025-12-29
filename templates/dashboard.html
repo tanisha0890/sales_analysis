@@ -1,25 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>TERMINAL // Sales Insights</title>
+
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;900&display=swap" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;900&display=swap"
+        rel="stylesheet"
+    >
 </head>
+
 <body>
 
 <div class="container">
 
+    <!-- ================= UPLOAD ================= -->
+    <form method="POST" enctype="multipart/form-data" class="upload-box">
+
+        <input type="file" name="file" accept=".csv" required>
+
+        <button type="submit">UPLOAD DATASET</button>
+
+        <!-- INFO POPUP -->
+        <div class="info-wrapper">
+            <span class="info-btn">?</span>
+
+            <div class="info-popup">
+                <h4>REQUIRED CSV FORMAT</h4>
+
+                <p><strong>Mandatory Columns:</strong></p>
+                <ul>
+                    <li>Sale_Date</li>
+                    <li>Sales_Amount</li>
+                    <li>Quantity_Sold</li>
+                    <li>Region</li>
+                    <li>Product_Category</li>
+                </ul>
+
+                <p><strong>Accepted Aliases:</strong></p>
+                <ul>
+                    <li><span>Sale_Date</span> → date, sales_date</li>
+                    <li><span>Sales_Amount</span> → sales, revenue, amount</li>
+                    <li><span>Quantity_Sold</span> → qty, units</li>
+                    <li><span>Region</span> → location, area, zone</li>
+                    <li><span>Product_Category</span> → product, category</li>
+                </ul>
+
+                <p class="hint">
+                    Columns will be auto-mapped internally.
+                </p>
+            </div>
+        </div>
+
+    </form>
+
+    {% if error %}
+    <div class="terminal-error">
+        ERROR :: {{ error }}
+    </div>
+    {% endif %}
+
+    {% if results %}
+
+    <!-- ================= HEADER ================= -->
     <div class="header">
         <div class="status-bar">
-            <span class="dot"></span> LIVE SYSTEM STATUS: OPTIMAL
+            <span class="dot"></span>
+            LIVE SYSTEM STATUS: OPTIMAL
         </div>
+
         <h1>SALES_INSIGHT_DASHBOARD</h1>
         <p>Consumer Goods // Data Stream</p>
     </div>
 
+    <!-- ================= KPI GRID ================= -->
     <div class="kpi-grid">
+
         <div class="kpi-card">
             <h3>TOTAL REVENUE</h3>
             <p class="price-up">{{ results.total_sales }}</p>
@@ -32,19 +95,26 @@
 
         <div class="kpi-card">
             <h3>DOMINANT REGION</h3>
-            <p style="color: #1d9bf0;">{{ results.best_region }}</p>
+            <p style="color: #1d9bf0;">
+                {{ results.best_region }}
+            </p>
         </div>
+
     </div>
 
+    <!-- ================= PRODUCT SPLIT ================= -->
     <div class="data-split">
+
         <div class="section">
             <h2>TOP PERFORMING ASSETS</h2>
             <ul class="list">
                 {% for product, value in results.top_3_products.items() %}
-                    <li>
-                        <span>{{ product }}</span>
-                        <span class="price-up">+${{ "{:,.0f}".format(value) }}</span>
-                    </li>
+                <li>
+                    <span>{{ product }}</span>
+                    <span class="price-up">
+                        +${{ "{:,.0f}".format(value) }}
+                    </span>
+                </li>
                 {% endfor %}
             </ul>
         </div>
@@ -53,15 +123,19 @@
             <h2>UNDERPERFORMING ASSETS</h2>
             <ul class="list">
                 {% for product, value in results.worst_3_products.items() %}
-                    <li>
-                        <span>{{ product }}</span>
-                        <span class="price-down">-${{ "{:,.0f}".format(value) }}</span>
-                    </li>
+                <li>
+                    <span>{{ product }}</span>
+                    <span class="price-down">
+                        -${{ "{:,.0f}".format(value) }}
+                    </span>
+                </li>
                 {% endfor %}
             </ul>
         </div>
+
     </div>
 
+    <!-- ================= MONTHLY GRAPH ================= -->
     <div class="section">
         <h2>HISTORICAL TREND ANALYSIS</h2>
         <div class="graph">
@@ -69,6 +143,7 @@
         </div>
     </div>
 
+    <!-- ================= REGION GRAPH ================= -->
     <div class="section">
         <h2>GEOGRAPHIC EXPOSURE</h2>
         <div class="graph">
@@ -76,13 +151,15 @@
         </div>
     </div>
 
+    <!-- ================= FOOTER ================= -->
     <div class="footer">
         &copy; 2024 INTERNAL DATA TERMINAL // ENCRYPTED ACCESS ONLY
     </div>
+
+    {% endif %}
 
 </div>
 
 </body>
 </html>
-
 
